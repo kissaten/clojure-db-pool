@@ -1,27 +1,47 @@
 (ns clojure-getting-started.web
-  (:require [compojure.core :refer [defroutes GET PUT POST DELETE ANY]]
-            [compojure.handler :refer [site]]
-            [compojure.route :as route]
-            [clojure.java.io :as io]
-            [ring.adapter.jetty :as jetty]
-            [environ.core :refer [env]]))
+  (:require
+    [clojure.java.jdbc :as jdbc]
+    [clojure-getting-started.db :as db]
+    [compojure.core :refer [defroutes GET PUT POST DELETE ANY]]
+    [compojure.handler :refer [site]]
+    [compojure.route :as route]
+    [clojure.java.io :as io]
+    [ring.adapter.jetty :as jetty]
+    [environ.core :refer [env]]))
 
-(defn splash []
+(defn migrated? []
+  (-> (jdbc/query db/spec
+    [(str "select count(*) from information_schema.tables "
+    "where table_name='ticks'")])
+    first :count pos?))
+
+(defn migrate []
+  (when (not (migrated?))
+  (print "Creating database structure...") (flush)
+  (jdbc/db-do-commands db/spec
+    (jdbc/create-table-ddl
+      :ticks
+      [:id :serial "PRIMARY KEY"]
+      [:body :varchar "NOT NULL"]
+      [:tick :timestamp "NOT NULL" "DEFAULT CURRENT_TIMESTAMP"]))
+      (println " done")))
+
+(defn tick []
+  (jdbc/insert! db/spec :ticks [:body] ["hello"])
   {:status 200
    :headers {"Content-Type" "text/plain"}
-   :body (pr-str ["Hello" :from 'Heroku])})
-
-(defn request-id-filter [request])
+   :body (str "Ticks: " (first (jdbc/query db/spec ["select count(*) from ticks"])))})
 
 (defroutes app
-  (ANY "*" {:keys [headers params body] :as request}
-    (println (format "request_id=%s" (get headers "x-request-id"))))
   (GET "/" []
-    (splash))
+    (tick))
   (ANY "*" []
     (route/not-found (slurp (io/resource "404.html")))))
 
+(defn create-database [] "done")
+
 (defn -main [& [port]]
+  (migrate)
   (let [port (Integer. (or port (env :port) 5000))]
     (jetty/run-jetty (site #'app) {:port port :join? false})))
 
