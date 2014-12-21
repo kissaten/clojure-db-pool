@@ -27,18 +27,14 @@
       (println " done")))
 
 (defn tick []
-  (jdbc/insert! db/spec :ticks [:body] ["hello"])
-  {:status 200
-   :headers {"Content-Type" "text/plain"}
-   :body (str "Ticks: " (first (jdbc/query db/spec ["select count(*) from ticks"])))})
+  (jdbc/insert! db/spec :ticks [:body] ["hello"]))
 
 (defroutes app
-  (GET "/" []
-    (tick))
-  (ANY "*" []
-    (route/not-found (slurp (io/resource "404.html")))))
-
-(defn create-database [] "done")
+  (GET "*" []
+    (tick)
+    {:status 200
+      :headers {"Content-Type" "text/plain"}
+      :body (str "Ticks: " (first (jdbc/query db/spec ["select count(*) from ticks"])))}))
 
 (defn -main [& [port]]
   (migrate)
