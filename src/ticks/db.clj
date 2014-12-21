@@ -1,4 +1,4 @@
-(ns clojure-getting-started.db
+(ns ticks.db
   (:import com.mchange.v2.c3p0.ComboPooledDataSource)
   (require
     [clojure.java.jdbc :as jdbc]
@@ -7,7 +7,7 @@
 (def db-uri
   (java.net.URI. (or
     (System/getenv "DATABASE_URL")
-    "postgresql://localhost:5432/jkutner")))
+    "postgresql://localhost:5432/ticks")))
 
 (def user-and-password
   (if (nil? (.getUserInfo db-uri))

@@ -1,7 +1,7 @@
-(ns clojure-getting-started.web
+(ns ticks.web
   (:require
     [clojure.java.jdbc :as jdbc]
-    [clojure-getting-started.db :as db]
+    [ticks.db :as db]
     [compojure.core :refer [defroutes GET PUT POST DELETE ANY]]
     [compojure.handler :refer [site]]
     [compojure.route :as route]
